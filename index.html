@@ -26,65 +26,90 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .app-bar {
             width: 100%;
-            padding: 5vh 0 2vh;
+            padding: 25px 0;
             text-align: center;
+            background: transparent;
+            z-index: 10;
         }
-
         .app-bar h1 {
             margin: 0;
-            font-size: clamp(12px, 4vw, 16px);
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 4px;
             font-weight: 800;
             color: var(--primary);
+            text-shadow: 0 0 15px rgba(28, 166, 90, 0.4);
         }
 
         .scanner-wrapper {
             position: relative;
             width: 85%;
-            max-width: 400px;
-            margin: 20px auto;
+            max-width: 350px;
+            aspect-ratio: 1/1;
+            margin-top: 20px;
+            border-radius: 40px;
+            padding: 10px;
             background: var(--glass);
             border: 1px solid var(--border);
             backdrop-filter: blur(10px);
-            border-radius: clamp(20px, 10vw, 40px);
-            padding: 10px;
-            box-sizing: border-box;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
 
         #reader {
             width: 100% !important;
+            height: 100% !important;
             border: none !important;
-            border-radius: clamp(15px, 8vw, 30px);
+            border-radius: 30px;
             overflow: hidden;
         }
 
-        /* Responsive UI for the scanner internals */
-        #reader__scan_region video {
-            object-fit: cover !important;
+        .scan-line {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            z-index: 5;
+            border-radius: 10px;
+            animation: scanMove 2.5s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes scanMove {
+            0%, 100% { top: 15%; opacity: 0.2; }
+            50% { top: 85%; opacity: 1; }
         }
 
         .status-box {
-            margin-top: auto;
-            margin-bottom: 40px;
+            margin-top: 40px;
             text-align: center;
-            width: 90%;
+            width: 80%;
         }
-
+        .status-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
+            margin-bottom: 8px;
+        }
         .last-scanned {
-            font-size: clamp(16px, 5vw, 24px);
+            font-size: 20px;
             font-weight: 700;
+            color: #fff;
             background: var(--glass);
-            padding: 15px 30px;
+            padding: 12px 25px;
             border-radius: 20px;
             border: 1px solid var(--border);
             display: inline-block;
+            min-width: 150px;
         }
 
         #result-popup {
@@ -96,34 +121,47 @@
             padding: 20px 40px;
             border-radius: 30px;
             font-weight: 800;
-            width: 70%;
-            max-width: 300px;
-            text-align: center;
+            font-size: 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             opacity: 0;
             visibility: hidden;
             transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 1000;
         }
-
         #result-popup.show {
             opacity: 1;
             visibility: visible;
             transform: translate(-50%, -50%) scale(1);
         }
 
-        @media (max-height: 600px) {
-            .app-bar { padding: 10px 0; }
-            .scanner-wrapper { width: 50%; max-width: 250px; margin-top: 5px; }
-            .status-box { margin-bottom: 10px; }
+        #reader__dashboard_section_csr button {
+            background: var(--primary) !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 15px !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            margin-top: 10px !important;
+        }
+
+        /* Mobile specific camera scaling */
+        #reader video {
+            object-fit: cover !important;
         }
     </style>
 </head>
 <body>
     <div class="app-bar"><h1>ICMU Gatekeeper</h1></div>
-    <div class="scanner-wrapper"><div id="reader"></div></div>
+    <div class="scanner-wrapper">
+        <div class="scan-line"></div>
+        <div id="reader"></div>
+    </div>
     <div class="status-box">
-        <div style="font-size: 10px; letter-spacing: 2px; color: #666; margin-bottom: 10px;">LAST SCAN</div>
-        <div id="display-id" class="last-scanned">---</div>
+        <div class="status-label">Active Session</div>
+        <div id="display-id" class="last-scanned">Waiting...</div>
     </div>
     <div id="result-popup">SUCCESS</div>
 
@@ -141,15 +179,38 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    function playBeep() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        } catch (e) {}
+    }
+
+    let isScanning = true;
     function onScanSuccess(decodedText) {
+        if(!isScanning) return;
+        isScanning = false;
+        playBeep();
+        if (navigator.vibrate) navigator.vibrate(100);
         db.ref('last_scan').set(decodedText);
         document.getElementById('display-id').innerText = decodedText;
         const popup = document.getElementById('result-popup');
         popup.classList.add('show');
-        setTimeout(() => popup.classList.remove('show'), 1500);
+        setTimeout(() => {
+            popup.classList.remove('show');
+            isScanning = true;
+        }, 1500);
     }
 
-    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 24, qrbox: 250 });
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 24, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 });
     html5QrcodeScanner.render(onScanSuccess);
 </script>
 </body>
