@@ -2,57 +2,237 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ICMU Scan Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>ICMU | Access Control Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: 'Montserrat', sans-serif; background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; transition: background 0.3s ease; }
-        .status-header { position: absolute; top: 20px; font-size: 12px; letter-spacing: 2px; color: #1ca65a; font-weight: 700; }
-        
-        #display-card { background: #111; border: 2px solid #1ca65a; border-radius: 30px; padding: 40px; width: 600px; text-align: center; transition: 0.5s; opacity: 0; transform: translateY(20px); }
-        #display-card.active { opacity: 1; transform: translateY(0); }
-        
-        .label { color: #888; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-top: 20px; }
-        .value { font-size: 42px; font-weight: 800; margin-bottom: 10px; }
-        .reg-value { color: #1ca65a; font-size: 28px; }
-        
-        #waiting-msg { font-size: 24px; color: #444; font-weight: 700; text-transform: uppercase; text-align: center; }
-        .error-msg { color: #ff4d4d; font-size: 14px; margin-top: 10px; }
+        :root {
+            --primary: #1ca65a;
+            --accent: #00ff88;
+            --bg: #0a0c0b;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+        }
 
-        /* History Table */
-        #history-container { margin-top: 30px; width: 600px; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { text-align: left; color: #1ca65a; padding-bottom: 5px; border-bottom: 1px solid #333; }
-        td { padding: 5px 0; border-bottom: 1px solid #222; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(28, 166, 90, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(0, 255, 136, 0.03) 0%, transparent 50%);
+            color: #fff;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left Section: Main Display */
+        .main-display {
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-right: 1px solid var(--border);
+        }
+
+        .header-brand {
+            position: absolute;
+            top: 40px;
+            left: 60px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        .brand-text {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        /* Profile Card */
+        #profile-card {
+            width: 100%;
+            max-width: 700px;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 60px;
+            text-align: left;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        #profile-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .profile-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .profile-name {
+            font-size: 64px;
+            font-weight: 800;
+            margin: 0 0 40px 0;
+            line-height: 1.1;
+            background: linear-gradient(to right, #fff, #999);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .meta-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Right Section: Sidebar Activity */
+        .sidebar {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .live-badge {
+            font-size: 10px;
+            background: rgba(28, 166, 90, 0.15);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--primary);
+        }
+
+        #history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .history-time { font-size: 10px; color: #555; }
+        .history-name { font-size: 14px; font-weight: 600; }
+        .history-reg { font-size: 12px; color: var(--primary); font-weight: 700; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        #waiting-state {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Success Animation */
+        .success-flash {
+            animation: flashBg 0.8s ease-out;
+        }
+
+        @keyframes flashBg {
+            0% { background: rgba(28, 166, 90, 0.2); }
+            100% { background: var(--bg); }
+        }
     </style>
 </head>
 <body>
 
-    <div class="status-header" id="sync-status">SYNCING WITH GOOGLE SHEETS...</div>
-    
-    <div id="waiting-msg">
-        Ready to Scan...
-        <div id="debug-info" class="error-msg"></div>
+    <div class="main-display" id="main-area">
+        <div class="header-brand">
+            <div class="brand-dot"></div>
+            <div class="brand-text">ICMU SECURITY GATEWAY</div>
+        </div>
+
+        <div id="waiting-state">SYSTEM READY // WAITING FOR SCAN</div>
+
+        <div id="profile-card">
+            <div class="profile-label">Authorized Personnel</div>
+            <h1 class="profile-name" id="disp-name">---</h1>
+            
+            <div class="meta-grid">
+                <div>
+                    <div class="profile-label">Registration</div>
+                    <div class="meta-value" id="disp-reg">---</div>
+                </div>
+                <div>
+                    <div class="profile-label">Index Number</div>
+                    <div class="meta-value" id="disp-index">---</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="display-card">
-        <div class="label">Member Name</div>
-        <div id="disp-name" class="value">---</div>
-        <div class="label">Registration No</div>
-        <div id="disp-reg" class="value reg-value">---</div>
-        <div class="label">Index Number</div>
-        <div id="disp-index" class="value">---</div>
-    </div>
-
-    <div id="history-container">
-        <table>
-            <thead><tr><th>Time</th><th>Reg No</th><th>Name</th></tr></thead>
-            <tbody id="history-body"></tbody>
-        </table>
+    <div class="sidebar">
+        <div class="sidebar-title">
+            RECENT ACTIVITY
+            <span class="live-badge">LIVE FEED</span>
+        </div>
+        <div id="history-list">
+            </div>
     </div>
 
 <script>
+    // 1. FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyABiLBG8RUyJtpHebMlWHejr7Xgzysrwlw",
       authDomain: "icmu-scanner.firebaseapp.com",
@@ -66,75 +246,72 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // 2. DATA SOURCE
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm2fWeo6R07EnowHGZgYFpYc4_ovvzSHYneP398bCp8gv8htAt_i81ySuuUFy1Y8GEXiwcTTGJvGX0/pub?gid=1318759872&single=true&output=csv";
     let memberData = [];
 
     async function loadMembers() {
         try {
-            // Added cache-busting timestamp to bypass CORS/Cache issues
-            const response = await fetch(SHEET_CSV_URL + "&t=" + new Date().getTime());
-            const text = await response.text();
-            
-            const lines = text.split('\n').map(line => line.split(','));
+            const res = await fetch(SHEET_CSV_URL + "&t=" + Date.now());
+            const text = await res.text();
+            const lines = text.split('\n').map(l => l.split(','));
             const headers = lines[0].map(h => h.trim().toLowerCase());
             
-            // Console Debugging - This helps find column index issues
-            console.log("Found Headers:", headers);
-
-            const iN = headers.indexOf("name");
-            const iI = headers.indexOf("index no");
-            const iR = headers.indexOf("reg no");
-
-            if (iN === -1 || iI === -1 || iR === -1) {
-                document.getElementById('debug-info').innerText = "Header Error: Check console (F12)";
-            }
+            const iN = headers.indexOf("name"), iI = headers.indexOf("index no"), iR = headers.indexOf("reg no");
 
             memberData = lines.slice(1).map(cols => ({
                 name: cols[iN]?.replace(/"/g, "").trim(),
                 index: cols[iI]?.replace(/"/g, "").trim(),
                 reg: cols[iR]?.replace(/"/g, "").trim()
             })).filter(m => m.name);
-
-            document.getElementById('sync-status').innerText = `ICMU SYSTEM ONLINE: ${memberData.length} MEMBERS LOADED`;
-        } catch (e) {
-            document.getElementById('sync-status').innerText = "SYNC FAILED. REFRESH PAGE.";
-            console.error(e);
-        }
+            
+            console.log("System Initialized: " + memberData.length + " entries.");
+        } catch (e) { console.error("Database link offline."); }
     }
 
+    // 3. LIVE LISTENER
     db.ref('last_scan').on('value', (snapshot) => {
-        const scannedID = snapshot.val();
-        if (scannedID) {
-            updateDisplay(scannedID.trim());
-        }
+        const id = snapshot.val();
+        if (id) processScan(id.trim());
     });
 
-    function updateDisplay(regID) {
-        // Search by Reg No or Index No
-        const member = memberData.find(m => m.reg === regID || m.index === regID);
-        const card = document.getElementById('display-card');
-        const waitMsg = document.getElementById('waiting-msg');
+    function processScan(scannedID) {
+        const member = memberData.find(m => m.reg === scannedID || m.index === scannedID);
+        const card = document.getElementById('profile-card');
+        const wait = document.getElementById('waiting-state');
+        const area = document.getElementById('main-area');
 
         if (member) {
-            document.body.style.background = "#0a2918"; // Dark green success
+            // Update Text
             document.getElementById('disp-name').innerText = member.name.toUpperCase();
             document.getElementById('disp-reg').innerText = member.reg;
             document.getElementById('disp-index').innerText = member.index;
-            
-            waitMsg.style.display = 'none';
+
+            // Animations
+            wait.style.display = 'none';
+            card.classList.remove('active');
+            void card.offsetWidth; // Trigger reflow
             card.classList.add('active');
-            addToHistory(member);
-        } else {
-            document.body.style.background = "#3d0a0a"; // Dark red fail
-            document.getElementById('debug-info').innerText = `ID NOT FOUND: ${regID}`;
+            
+            area.classList.add('success-flash');
+            setTimeout(() => area.classList.remove('success-flash'), 800);
+
+            logActivity(member);
         }
     }
 
-    function addToHistory(member) {
-        const body = document.getElementById('history-body');
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const row = `<tr><td>${time}</td><td>${member.reg}</td><td>${member.name}</td></tr>`;
-        body.insertAdjacentHTML('afterbegin', row);
+    function logActivity(m) {
+        const list = document.getElementById('history-list');
+        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        
+        const item = `
+            <div class="history-item">
+                <span class="history-time">${time}</span>
+                <span class="history-name">${m.name}</span>
+                <span class="history-reg">${m.reg}</span>
+            </div>
+        `;
+        list.insertAdjacentHTML('afterbegin', item);
     }
 
     loadMembers();
