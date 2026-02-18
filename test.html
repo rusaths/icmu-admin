@@ -25,7 +25,10 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth; 
+            scroll-snap-type: y mandatory;
+        }
 
         body {
             background-color: var(--bg-deep);
@@ -34,6 +37,12 @@
             background-image: 
                 radial-gradient(circle at 0% 0%, rgba(46, 204, 113, 0.07) 0%, transparent 50%),
                 radial-gradient(circle at 100% 100%, rgba(46, 204, 113, 0.07) 0%, transparent 50%);
+        }
+
+        section h2 {
+            margin-bottom: 50px;
+            text-align: center;
+            width: 100%;
         }
 
         /* --- NAVIGATION --- */
@@ -45,11 +54,81 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 5%;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            background: rgba(4, 18, 11, 0.75);
-            border-bottom: 1px solid var(--glass-border);
             z-index: 1000;
+            transition: var(--transition); /* Smoothly changes background */
+            background: transparent; /* Initial state */
+            border-bottom: 1px solid transparent;
+        }
+
+        /* Keep background transparent/blurred across all sections */
+        nav.scrolled {
+            background: transparent; /* No solid color */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Navigation Visibility on White Backgrounds */
+        nav.light-mode .nav-title, 
+        nav.light-mode .nav-links a, 
+        nav.light-mode .sidebar-toggle {
+            color: #1a1a1a !important;
+        }
+
+        nav.light-mode .nav-title {
+            border-left: 1px solid rgba(0, 0, 0, 0.2) !important;
+        }
+
+        nav.light-mode {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Marquee Animation Logic */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .marquee-wrapper {
+            overflow: hidden;
+            width: 100%;
+            /* Subtle fade effect on edges */
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+
+        .marquee-container {
+            display: flex;
+            width: max-content;
+            animation: marquee 40s linear infinite;
+        }
+
+        .marquee-container:hover {
+            animation-play-state: paused;
+        }
+
+        .bearer-card {
+            width: 220px;
+            margin: 0 15px;
+            text-align: center;
+            background: rgba(0,0,0,0.03) !important;
+            flex-shrink: 0;
+        }
+
+        /* Maintain the green hover effect even when dark */
+        nav.scrolled .nav-links a:hover {
+            color: var(--accent-green) !important;
+        }
+
+        /* Ensure the logo is still visible (optional: add a slight shadow if it's too light) */
+        nav.scrolled .logo-img {
+            filter: drop-shadow(0 0 2px rgba(0,0,0,0.1));
+        }
+
+        nav.on-white-bg .nav-links a,
+        nav.on-white-bg .nav-title,
+        nav.on-white-bg .sidebar-toggle {
+            color: #1a1a1a !important;
         }
 
         .nav-left {
@@ -60,7 +139,7 @@
 
         .logo-group {
             display: flex;
-            gap: 10px;
+            gap: 0px;
             align-items: center;
         }
 
@@ -135,11 +214,39 @@
 
         /* --- SECTIONS --- */
         section {
-            padding: 120px 8% 80px;
-            min-height: 100vh;
+            padding: 80px 8% 40px; /* Reduced top/bottom padding to fit content */
+            height: 100vh; /* Fixed height to match device screen */
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow: hidden; /* Prevents internal scrolling from breaking layout */
+            position: relative;
+            justify-content: space-evenly;
+            scroll-snap-align: start;
+        }
+
+        section:not(:last-of-type) {
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* This applies to ALL sections except the Hero */
+        section:not(.hero) {
+            background: radial-gradient(circle at 50% 50%, rgba(46, 204, 113, 0.05) 0%, #050505 100%);
+            color: #ffffff;
+        }
+
+        section:not(.hero)::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            width: 400px;
+            height: 400px;
+            background: var(--accent-green);
+            filter: blur(150px);
+            opacity: 0.08; /* Very subtle glow */
+            pointer-events: none;
+            transform: translate(-50%, -50%);
         }
 
         .section-tag {
@@ -159,14 +266,58 @@
         }
 
         /* --- HERO --- */
-        .hero { text-align: center; align-items: center; }
+        .hero { 
+            text-align: center; 
+            align-items: center;
+            justify-content: center; /* This ensures text stays in the middle of the screen */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Adjust this to make video darker/lighter */
+            z-index: 1;
+        }
+        
+        /* Hero Text Refinements */
         .hero h1 {
-            font-size: clamp(3rem, 10vw, 5.5rem);
-            line-height: 1.1;
-            margin-bottom: 25px;
-            background: linear-gradient(to bottom, #fff 40%, var(--accent-green));
+            background: linear-gradient(to bottom, #ffffff 60%, rgba(255,255,255,0.5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        /* Make the bold slogan glow slightly to guide the eye */
+        .hero p:nth-of-type(2) {
+            text-shadow: 0 0 15px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Animation for the whole block to fade in neatly */
+        .hero div[style*="z-index: 2"] {
+            animation: heroFadeIn 1.5s ease-out forwards;
+        }
+
+        @keyframes heroFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* --- GLASS CARDS (SERVICES & TEAM) --- */
@@ -178,18 +329,29 @@
         }
 
         .glass-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 40px;
-            border-radius: 24px;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .glass-card:hover {
+            transform: translateY(-10px);
             background: rgba(46, 204, 113, 0.05);
-            transform: translateY(-8px);
-            border-color: var(--accent-green);
+            border-color: rgba(46, 204, 113, 0.4);
+            box-shadow: 0 15px 40px rgba(46, 204, 113, 0.1);
+        }
+
+        .glass-card h3, .glass-card h4 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
         }
 
         .glass-card i {
@@ -209,18 +371,23 @@
 
         /* --- NEWS & ARTICLES --- */
         .news-card {
-            display: flex;
-            align-items: flex-start;
-            gap: 25px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--accent-green); /* Green accent strip */
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding: 25px;
-            border-radius: 18px;
+            border-radius: 12px;
             margin-bottom: 15px;
-            transition: var(--transition);
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
         }
 
-        .news-card:hover { padding-left: 35px; border-color: var(--accent-green); }
+        .news-card:hover {
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.06);
+        }
 
         /* --- CONTACT --- */
         .contact-wrapper {
@@ -273,15 +440,560 @@
             transition: var(--transition);
         }
 
-        .social-links a:hover { color: var(--accent-green); opacity: 1; transform: scale(1.2); }
+        .social-links a:hover {
+            color: var(--accent-green);
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        /* Enhanced Typography */
+        h1, h2, h3 {
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            line-height: 1.6;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-green);
+        }
+
+        /* Hide default scrollbar */
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Dot Navigation Container */
+        .dot-nav {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 9999 !important; /* Forces dots above everything else */
+            opacity: 1 !important;    /* Overrides any fade-in animations */
+            transform: translateY(-50%) !important;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-green);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 1 !important;
+            background: rgba(46, 204, 113, 0.2);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .dot::after {
+            content: attr(data-label);
+            position: absolute;
+            right: 30px;
+            opacity: 0;
+            color: var(--accent-green);
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Hover and Active states */
+        .dot:hover::after {
+            opacity: 1;
+            right: 25px;
+        }
+
+        .dot:hover, .dot.active {
+            background: var(--accent-green) !important;
+            transform: scale(1.3);
+        }
+
+        /* Dark labels for white sections */
+        .dot-nav.on-white .dot::after {
+            color: #1a1a1a;
+        }
+        .dot-nav.on-white .dot.active, 
+        .dot-nav.on-white .dot:hover {
+            background: #1a1a1a !important;
+            border-color: #1a1a1a !important;
+        }
+
+        /* Active Dot State */
+        .dot.active {
+            background: var(--accent-green) !important;
+            transform: scale(1.4);
+            box-shadow: 0 0 10px var(--accent-green);
+            border-color: var(--accent-green) !important;
+        }
+
+        /* Specific colors for when the user is on News or Team sections */
+        .dot-nav.on-white .dot {
+            border-color: #1a1a1a !important;
+        }
+
+        .dot-nav.on-white .dot.active {
+            background: #1a1a1a !important;
+            border-color: #1a1a1a !important;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        /* Center Content Perfectly in Sections */
+        section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Vertical center */
+            align-items: center;     /* Horizontal center */
+            text-align: center;
+            padding: 0 10%;          /* Side breathing room */
+        }
+
+        /* Ensure grids and cards center themselves */
+        .grid-layout {
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .news-card, .glass-card {
+            text-align: left; /* Keep text readable inside centered cards */
+        }
+
+        .view-all-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background: transparent;
+            color: #1a1a1a; /* Dark text for the white section */
+            border: 2px solid #1a1a1a;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            text-decoration: none;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+        }
+
+        .view-all-btn:hover {
+            background: #1a1a1a;
+            color: #ffffff;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        /* --- Team Section Custom Styles --- */
+
+        /* Individual Bearer Cards in the Marquee */
+        .bearer-card {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 240px !important;  /* Fixed width for symmetry */
+            height: 340px !important; /* Increased height as requested */
+            padding: 30px 20px !important;
+            margin: 0 15px;
+            background: rgba(0, 0, 0, 0.03) !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* The Photo Circle */
+        .member-img-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            margin: 0 auto 20px auto;
+            border: 3px solid var(--accent-green);
+            overflow: hidden;
+        }
+
+        /* Text inside Bearer Cards */
+        .bearer-info h4 {
+            color: #1a1a1a;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .bearer-info p {
+            color: var(--accent-green);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Principal & MIC Fixed Bottom Cards */
+        .line-card {
+            flex: 1;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            padding: 15px 25px !important;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.04) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            height: auto !important;
+        }
+
+        .member-img-small {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #d0d0d0;
+            flex-shrink: 0;
+        }
+
+        /* --- News Section Custom Styles --- */
+
+        /* Container for horizontal layout */
+        .news-horizontal-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px 10px;
+            scrollbar-width: thin; /* For Firefox */
+            scrollbar-color: var(--accent-green) transparent;
+        }
+
+        /* Hide scrollbar for Chrome/Safari but keep functionality */
+        .news-horizontal-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .news-horizontal-container::-webkit-scrollbar-thumb {
+            background: var(--accent-green);
+            border-radius: 10px;
+        }
+
+        /* Horizontal Card Styling */
+        .news-card-horizontal {
+            flex: 0 0 300px; /* Fixed width so they stay side-by-side */
+            min-height: 200px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-top: 5px solid var(--accent-green); /* Line moved to top for horizontal look */
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            transition: transform 0.3s ease;
+        }
+
+        .news-card-horizontal:hover {
+            transform: translateY(-10px);
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .news-card-horizontal h4 {
+            color: #1a1a1a;
+            margin: 12px 0;
+            font-size: 1.1rem;
+        }
+
+        .news-card-horizontal p {
+            color: #666;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Ensure Marquee container respects height */
+        .marquee-wrapper {
+            overflow: hidden;
+            width: 100%;
+            padding: 20px 0;
+        }
+
+        /* News Grid Layout */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* Exactly 5 columns */
+            gap: 15px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 70vh; /* Adjust height to fit screen */
+        }
+
+        /* Card Styling */
+        .news-card-featured {
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .news-card-featured:hover {
+            transform: translateY(-10px);
+            background: #fdfdfd;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        /* 1:1 Square Image Container */
+        .news-image-box {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* Forces square shape */
+            background: #eee;
+            overflow: hidden;
+        }
+
+        .news-image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures image fills square without stretching */
+        }
+
+        /* Content Area */
+        .news-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-content .news-date {
+            color: var(--accent-green);
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+
+        .news-content h4 {
+            color: #1a1a1a;
+            font-size: 1rem;
+            margin: 10px 0;
+            line-height: 1.2;
+        }
+
+        .news-content p {
+            color: #666;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* News Image Gradient Overlay */
+        .news-image-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+        }
+
+        .image-gradient {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+            pointer-events: none;
+        }
+
+        /* More News Button */
+        .btn-more {
+            padding: 12px 30px;
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-more:hover {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        /* Equal Gaps for Grid */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            width: 96%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Ensure equal sizing for bearer cards */
+        .bearer-card {
+            flex: 0 0 240px;
+            height: 340px;
+            margin: 0 10px;
+        }
+
+        /* Animation States */
+        .news-card-featured {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .news-card-featured.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Staggered delays for the 5 cards */
+        .news-card-featured:nth-child(1) { transition-delay: 0.1s; }
+        .news-card-featured:nth-child(2) { transition-delay: 0.2s; }
+        .news-card-featured:nth-child(3) { transition-delay: 0.3s; }
+        .news-card-featured:nth-child(4) { transition-delay: 0.4s; }
+        .news-card-featured:nth-child(5) { transition-delay: 0.5s; }
+
+        /* Responsive: Stack cards on mobile */
+        @media (max-width: 900px) {
+            .news-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+                overflow-y: scroll;
+            }
+            #news { height: auto; }
+        }
+
+        /* About Section Specific Polish */
+        #about {
+            background: radial-gradient(circle at 50% 50%, rgba(46, 204, 113, 0.05) 0%, #04120b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #about .glass-card {
+            height: auto; /* Allow height to fit the text content */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Ensure the headings in About are always white/green */
+        #about h2 {
+            color: #ffffff;
+            margin-bottom: 40px;
+        }
+
+        #news {
+            overflow-y: hidden; /* Allows scrolling inside the section if news is long */
+            background: #ffffff !important; /* Forces white regardless of other rules */
+            color: #1a1a1a;
+        }
+
+        /* Make News and Team sections white */
+        #news, #team {
+            background: #ffffff;
+            color: #1a1a1a; /* Dark text for contrast */
+        }
+
+        /* Ensure the Section Tags and Headings are visible on white */
+        #news .section-tag, #team .section-tag {
+            color: var(--accent-green);
+        }
+
+        #news h2, #team h2 {
+            color: #050505;
+        }
+
+        #news .news-card {
+            background: #f9f9f9; /* Slightly off-white for a subtle lift */
+            border: 1px solid #eeeeee;
+            border-left: 4px solid var(--accent-green);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #news h2 {
+            color: #050505;
+        }
+
+        #news h4 {
+            color: #1a1a1a;
+        }
+
+        #news p {
+            color: #444444; /* Darker grey for readability */
+            opacity: 1; /* Reset opacity from the hero section defaults */
+        }
+
+        #news .news-card h4 {
+            color: #1a1a1a;
+        }
+
+        /* Adjust Team Glass Cards for the white background */
+        #team .glass-card {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        #team .glass-card h4 {
+            color: #1a1a1a;
+        }
+
+        /* Specific styling for the 'White Mix' feel in certain sections */
+        #about, #news, #contact {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+
+        /* Fix for Team grid to match About's neatness */
+        #team .grid-layout {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            max-width: 1000px;
+        }
+
+        #team div[style*="overflow-x: auto"]::-webkit-scrollbar {
+            height: 4px;
+        }
+        #team div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb {
+            background: var(--accent-green);
+            border-radius: 10px;
+        }
 
         @media (max-width: 1024px) {
             .nav-links { display: none; }
             .contact-wrapper { grid-template-columns: 1fr; }
         }
+
     </style>
 </head>
 <body>
+    <div class="dot-nav" id="dotNav">
+        <div class="dot" data-label="Home" onclick="scrollToSection('home')"></div>
+        <div class="dot" data-label="About" onclick="scrollToSection('about')"></div>
+        <div class="dot" data-label="News" onclick="scrollToSection('news')"></div>
+        <div class="dot" data-label="Services" onclick="scrollToSection('services')"></div>
+        <div class="dot" data-label="Team" onclick="scrollToSection('team')"></div>
+        <div class="dot" data-label="Contact" onclick="scrollToSection('contact')"></div>
+    </div>
 
     <div id="sidebar" class="side-menu">
         <i class="fas fa-times sidebar-toggle" onclick="toggleMenu()" style="position: absolute; top: 40px; right: 40px;"></i>
@@ -306,7 +1018,7 @@
             <ul class="nav-links">
                 <li><a href="#home">Home</a></li>
                 <li><a href="#about">About</a></li>
-                <li><a href="#news">News</a></li>
+                <li><a href="#services">Services</a></li> <li><a href="#news">News</a></li>
                 <li><a href="#team">Team</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
@@ -315,66 +1027,181 @@
     </nav>
 
     <section id="home" class="hero">
-        <span class="section-tag">Strength & Courtesy</span>
-        <h1>THE GREEN<br>STORYTELLERS</h1>
-        <p style="max-width: 650px; opacity: 0.5; margin-bottom: 60px;">Professional broadcasting, cinematic journalism, and technical precision from the heart of Isipathana.</p>
-        
-        <div class="grid-layout" style="text-align: left;">
-            <div class="glass-card">
-                <i class="fas fa-microphone-alt"></i>
-                <h3>Announcing</h3>
-                <p style="opacity: 0.6; font-size: 0.9rem; margin-top: 10px;">The prestigious voice of the College, mastering public speaking and live event hosting.</p>
+        <video autoplay muted loop playsinline class="hero-video">
+            <source src="bg-vid.mp4" type="video/mp4">
+        </video>
+        <div style="position: relative; z-index: 2; padding: 0 20px;">
+            <h1 style="font-size: clamp(3.5rem, 12vw, 6.5rem); margin-bottom: 20px; letter-spacing: -2px; line-height: 0.95;">
+                PULSE OF <br> ISIPATHANA
+            </h1>
+
+            <p style="max-width: 650px; opacity: 0.8; font-size: 1.1rem; margin: 0 auto 25px; line-height: 1.6; letter-spacing: 0.5px; font-weight: 300;">
+                Capturing the legacy and broadcasting the spirit of the Green Machine. We are the lens through which history is documented and greatness is shared with the world.
+            </p>
+
+            <p style="font-weight: 800; text-transform: uppercase; letter-spacing: 4px; color: var(--accent-green); margin-bottom: 10px; font-size: 0.9rem;">
+                No Sacrifice, No Victory
+            </p>
+
+            <p style="font-style: italic; font-size: 0.8rem; opacity: 0.5; letter-spacing: 2px;">
+                Since 1999
+            </p>
+        </div>
+    </section>
+
+    <section id="about">
+        <div style="max-width: 1000px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; align-items: center;">
+            <span class="section-tag">Our Heritage</span>
+            <h2>About Us</h2>
+            
+            <div class="glass-card" style="text-align: center; margin-bottom: 30px; width: 100%;">
+                <p style="opacity: 0.9; font-size: 1.1rem; line-height: 1.8; max-width: 800px; margin: 0 auto;">
+                    Founded with the vision of capturing the spirit of Isipathana College, the Media Unit stands as the official chronicler of our school's legacy. We are a hub where technical precision meets creative storytelling, nurturing the next generation of broadcasters and journalists.
+                </p>
             </div>
-            <div class="glass-card">
-                <i class="fas fa-pen-nib"></i>
-                <h3>Journalism</h3>
-                <p style="opacity: 0.6; font-size: 0.9rem; margin-top: 10px;">Documenting history through creative writing, reporting, and editorial excellence.</p>
-            </div>
-            <div class="glass-card">
-                <i class="fas fa-bolt"></i>
-                <h3>Technical</h3>
-                <p style="opacity: 0.6; font-size: 0.9rem; margin-top: 10px;">Managing high-end live streams, sound engineering, and digital infrastructure.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; width: 100%;">
+                <div class="glass-card" style="padding: 30px; border-left: 4px solid var(--accent-green);">
+                    <h4 style="color: var(--accent-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Our Mission</h4>
+                    <p style="opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">To provide professional-grade media coverage while nurturing the technical and creative talents of Isipathanians through hands-on experience.</p>
+                </div>
+                <div class="glass-card" style="padding: 30px; border-left: 4px solid var(--accent-green);">
+                    <h4 style="color: var(--accent-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Our Vision</h4>
+                    <p style="opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">To be the leading school media unit in Sri Lanka, setting global benchmarks in digital journalism and live broadcasting excellence.</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <section id="news">
-        <span class="section-tag">Latest Updates</span>
-        <h2>News & Articles</h2>
-        <div class="news-card">
-            <h3 style="color: var(--accent-green); min-width: 80px;">18 FEB</h3>
-            <div>
-                <h4>Sports Meet Live Stream Success</h4>
-                <p style="opacity: 0.5;">The technical crew completed a 4K multi-cam stream for the Inter-House Sports Meet.</p>
+    <section id="news" style="height: 100vh; display: flex; flex-direction: column; justify-content: center; background: #ffffff; padding: 80px 2% 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <span class="section-tag">Updates</span>
+            <h2 style="color: #050505;">Latest News</h2>
+        </div>
+
+        <div class="news-grid">
+            <div class="news-card-featured">
+                <div class="news-image-box">
+                    <img src="placeholder-image.jpg" alt="News 1">
+                </div>
+                <div class="news-content">
+                    <span class="news-date">18 FEB 2026</span>
+                    <h4>Annual Media Workshop</h4>
+                    <p>Intensive cinematography and live broadcast engineering sessions.</p>
+                </div>
+            </div>
+            
+            <div class="news-card-featured">
+                <div class="news-image-box"><img src="placeholder-image.jpg" alt="News 2"></div>
+                <div class="news-content">
+                    <span class="news-date">12 FEB 2026</span>
+                    <h4>Studio Upgrade</h4>
+                    <p>Our technical bay has been upgraded with latest 4K switchers.</p>
+                </div>
+            </div>
+
+            <div class="news-card-featured">
+                <div class="news-image-box"><img src="placeholder-image.jpg" alt="News 3"></div>
+                <div class="news-content">
+                    <span class="news-date">05 FEB 2026</span>
+                    <h4>Rugby Live Stream</h4>
+                    <p>Live broadcast of the upcoming Inter-School Rugby tournament.</p>
+                </div>
+            </div>
+
+            <div class="news-card-featured">
+                <div class="news-image-box"><img src="placeholder-image.jpg" alt="News 4"></div>
+                <div class="news-content">
+                    <span class="news-date">28 JAN 2026</span>
+                    <h4>Photo Exhibition</h4>
+                    <p>Winners of 'Lens & Life' photography have been announced.</p>
+                </div>
+            </div>
+
+            <div class="news-card-featured">
+                <div class="news-image-box"><img src="placeholder-image.jpg" alt="News 5"></div>
+                <div class="news-content">
+                    <span class="news-date">20 JAN 2026</span>
+                    <h4>Membership Drive</h4>
+                    <p>Applications now open for the 2026 Media Club intake.</p>
+                </div>
             </div>
         </div>
-        <div class="news-card">
-            <h3 style="color: var(--accent-green); min-width: 80px;">12 FEB</h3>
-            <div>
-                <h4>New Journal Edition Released</h4>
-                <p style="opacity: 0.5;">The Journalism department published the special monthly news bulletin today.</p>
-            </div>
-        </div>
+        <div style="text-align: center;">
+        <button class="btn-more">View All News</button>
+    </div>
     </section>
 
-    <section id="team">
-        <span class="section-tag">Leadership</span>
-        <h2>Our Team</h2>
+    <section id="services">
+        <span class="section-tag">What We Do</span>
+        <h2>Services</h2>
         <div class="grid-layout">
-            <div class="glass-card" style="text-align: center;">
-                <div class="member-img" style="margin: 0 auto 20px;"></div>
-                <h4>President</h4>
-                <p style="opacity: 0.5; font-size: 0.8rem;">Executive Board</p>
+            <div class="glass-card">
+                <i class="fas fa-video"></i>
+                <h3>Live Streaming</h3>
+                <p style="opacity: 0.6; font-size: 0.9rem; margin-top: 10px;">Multi-camera 4K coverage for sports meets, award ceremonies, and concerts.</p>
             </div>
-            <div class="glass-card" style="text-align: center;">
-                <div class="member-img" style="margin: 0 auto 20px;"></div>
-                <h4>Secretary</h4>
-                <p style="opacity: 0.5; font-size: 0.8rem;">Executive Board</p>
+            <div class="glass-card">
+                <i class="fas fa-camera-retro"></i>
+                <h3>Event Photography</h3>
+                <p style="opacity: 0.6; font-size: 0.9rem; margin-top: 10px;">Professional photography capturing high-speed action and candid school moments.</p>
             </div>
-            <div class="glass-card" style="text-align: center;">
-                <div class="member-img" style="margin: 0 auto 20px;"></div>
-                <h4>Treasurer</h4>
-                <p style="opacity: 0.5; font-size: 0.8rem;">Executive Board</p>
+            <div class="glass-card">
+                <i class="fas fa-file-audio"></i>
+                <h3>Sound Engineering</h3>
+                <p style="opacity: 0.6; font-size: 0.9rem; margin-top: 10px;">Crystal clear audio management for outdoor and indoor college events.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="team" style="height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; background: #ffffff; padding: 40px 0;">
+        <div style="text-align: center;">
+            <span class="section-tag">Leadership</span>
+            <h2 style="color: #050505;">Our Team</h2>
+        </div>
+
+        <div class="marquee-wrapper" style="flex-grow: 1; display: flex; align-items: center;">
+            <div class="marquee-container">
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>President</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Secretary</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Vice President</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Secretary</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Treasurer</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Treasurer</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Technical Head</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Technical Head</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Chief Editor</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Editor</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Main Organizer</p></div></div>
+
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>President</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Secretary</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Vice President</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Secretary</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Treasurer</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Treasurer</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Technical Head</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Technical Head</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Chief Editor</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Asst. Editor</p></div></div>
+                <div class="glass-card bearer-card"><div class="member-img-circle"></div><div class="bearer-info"><h4>Name</h4><p>Main Organizer</p></div></div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 20px; width: 100%; max-width: 900px; margin: 0 auto 20px auto; padding: 0 20px;">
+            <div class="glass-card line-card">
+                <div class="member-img-small"></div>
+                <div style="text-align: left;">
+                    <h4 style="color: #1a1a1a; font-size: 0.95rem;">The Principal</h4>
+                    <p style="opacity: 0.6; font-size: 0.7rem; color: #1a1a1a; font-weight: 700;">PATRON</p>
+                </div>
+            </div>
+            <div class="glass-card line-card">
+                <div class="member-img-small"></div>
+                <div style="text-align: left;">
+                    <h4 style="color: #1a1a1a; font-size: 0.95rem;">Master in Charge</h4>
+                    <p style="opacity: 0.6; font-size: 0.7rem; color: #1a1a1a; font-weight: 700;">ADVISOR</p>
+                </div>
             </div>
         </div>
     </section>
@@ -419,12 +1246,94 @@
             });
         }, { threshold: 0.1 });
 
+        // This excludes elements inside .dot-nav from the fade-in animation
         document.querySelectorAll('section, .glass-card, .news-card').forEach(el => {
-            el.style.opacity = "0";
-            el.style.transform = "translateY(30px)";
-            el.style.transition = "all 0.8s ease-out";
-            observer.observe(el);
+            // Check if the element is NOT part of the dot navigation
+            if (!el.closest('.dot-nav')) {
+                el.style.opacity = "0";
+                el.style.transform = "translateY(30px)";
+                el.style.transition = "all 0.8s ease-out";
+                observer.observe(el);
+            }
         });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+       window.addEventListener('scroll', () => {
+        const nav = document.querySelector('nav');
+        const sections = document.querySelectorAll('section');
+        const dotNav = document.getElementById('dotNav');
+        const dots = document.querySelectorAll('.dot');
+        let currentSection = "";
+
+        // 1. Toggle navigation background blur
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+
+        // 2. Determine current section (offset for better accuracy)
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 150) {
+                currentSection = section.getAttribute('id');
+            }
+        });
+
+        // 3. Handle Nav and Dots on White Backgrounds (News & Team)
+        if (currentSection === 'news' || currentSection === 'team') {
+            nav.classList.add('light-mode');
+            dotNav.classList.add('on-white');
+        } else {
+            nav.classList.remove('light-mode');
+            dotNav.classList.remove('on-white');
+        }
+
+        // 4. Update Active Dot Color
+        dots.forEach(dot => {
+            dot.classList.remove('active');
+            // Matches the dot to the section by checking the 'onclick' attribute
+            if (dot.getAttribute('onclick').includes(currentSection)) {
+                dot.classList.add('active');
+            }
+        });
+    });
+
+    // Initialize Intersection Observer for News Cards
+    const newsObserverOptions = {
+        threshold: 0.2 // Trigger when 20% of the section is visible
+    };
+
+    const newsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Find all cards within this section and add the visible class
+                const cards = entry.target.querySelectorAll('.news-card-featured');
+                cards.forEach(card => card.classList.add('visible'));
+                
+                // Unobserve after animating once
+                newsObserver.unobserve(entry.target);
+            }
+        });
+    }, newsObserverOptions);
+
+    // Start observing the news section
+    const newsSection = document.querySelector('#news');
+    if (newsSection) {
+        newsObserver.observe(newsSection);
+    }
     </script>
 </body>
 </html>
